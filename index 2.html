@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Mobile Adda V3</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f3f4f6;color:#111827}
+header{background:#111827;color:#fff;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:21px;font-weight:800}.brand small{display:block;font-size:12px;font-weight:500;color:#cbd5e1;margin-top:3px}
+header button{border:0;border-radius:10px;padding:11px 15px;font-weight:700}
+nav{display:flex;gap:8px;overflow-x:auto;padding:10px;background:#fff;border-bottom:1px solid #d1d5db;position:sticky;top:0;z-index:20}
+nav button{flex:0 0 auto;border:1px solid #d1d5db;background:#f8fafc;color:#111827;border-radius:9px;padding:10px 13px;font-weight:700}
+nav button.active{background:#111827;color:#fff}
+main{max-width:1100px;margin:auto;padding:18px 14px 40px}
+section{display:none}section.active{display:block}
+h1,h2{margin:10px 0 18px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.label{font-size:14px;color:#6b7280}.value{font-size:28px;font-weight:800;margin-top:8px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;background:#fff;border-radius:14px;padding:15px}
+input,select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:9px;font-size:15px}
+.btn{border:0;border-radius:9px;padding:12px 15px;background:#111827;color:#fff;font-weight:700}
+.secondary{background:#e5e7eb;color:#111827}
+.tablewrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;background:#fff;margin-top:15px}
+.table th,.table td{padding:11px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap;font-size:14px}
+.empty{text-align:center;padding:25px;color:#6b7280}
+@media(max-width:600px){main{padding:14px 10px}.cards{grid-template-columns:1fr}.brand{font-size:18px}}
+@media print{body>*{display:none!important}#invoicePrint{display:block!important}#invoicePaper{display:block!important}}
+#invoicePrint{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">📱 मोबाइल अड्डा<small>MOBILE ADDA • V3</small></div>
+  <button onclick="backup()">Backup</button>
+</header>
+
+<nav id="nav">
+<button class="active" onclick="openTab('dashboard',this)">📊 Dashboard</button>
+<button onclick="openTab('stock',this)">📱 Stock</button>
+<button onclick="openTab('sales',this)">💰 Sales</button>
+<button onclick="openTab('purchase',this)">🛒 Purchase</button>
+<button onclick="openTab('customers',this)">👥 Customers</button>
+<button onclick="openTab('repair',this)">🔧 Repair</button>
+<button onclick="openTab('exchange',this)">🔄 Exchange</button>
+<button onclick="openTab('expenses',this)">💸 Expenses</button>
+<button onclick="openTab('reports',this)">📈 Reports</button>
+</nav>
+
+<main>
+<section id="dashboard" class="active">
+<h2>Dashboard</h2>
+<div class="cards">
+<div class="card"><div class="label">Total Stock</div><div class="value" id="stockCount">0</div></div>
+<div class="card"><div class="label">Stock Value</div><div class="value" id="stockValue">₹0</div></div>
+<div class="card"><div class="label">Sold Phones</div><div class="value" id="soldCount">0</div></div>
+<div class="card"><div class="label">Sales Value</div><div class="value" id="salesValue">₹0</div></div>
+</div>
+<div class="card" style="margin-top:15px"><b>Quick Start</b><p>Add phones in Stock, then sell them from Sales. The sold phone is automatically removed from stock.</p></div>
+</section>
+
+<section id="stock">
+<h2>📱 Mobile Stock</h2>
+<div class="form">
+<input id="model" placeholder="Phone model">
+<input id="imei" placeholder="IMEI / IMEI2">
+<input id="condition" placeholder="New / Used">
+<input id="purchase" type="number" placeholder="Purchase price">
+<input id="sell" type="number" placeholder="Selling price">
+<button class="btn" onclick="addStock()">+ Add Phone</button>
+</div>
+<div style="margin-top:12px"><input id="search" placeholder="Search model or IMEI" oninput="render()"></div>
+<div class="tablewrap"><table class="table"><thead><tr><th>Model</th><th>IMEI</th><th>Condition</th><th>Buy</th><th>Sell</th><th></th></tr></thead><tbody id="stockTable"></tbody></table></div>
+</section>
+
+<section id="sales">
+<h2>💰 Sales & Invoice</h2>
+<div class="form">
+<select id="salePhone" onchange="setSalePrice()"></select>
+<input id="customerName" placeholder="Customer name">
+<input id="customerPhone" placeholder="Customer mobile">
+<input id="salePrice" type="number" placeholder="Selling price">
+<select id="payment"><option>Cash</option><option>UPI</option><option>Card</option><option>Bank Transfer</option></select>
+<button class="btn" onclick="makeSale()">Complete Sale</button>
+</div>
+<div class="tablewrap"><table class="table"><thead><tr><th>Invoice</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Profit</th><th>Date</th><th>Bill</th></tr></thead><tbody id="salesTable"></tbody></table></div>
+</section>
+
+<section id="purchase">
+<h2>🛒 Purchase</h2>
+<div class="form">
+<input id="buyModel" placeholder="Phone model"><input id="buyImei" placeholder="IMEI">
+<input id="buyPrice" type="number" placeholder="Purchase price"><input id="buySell" type="number" placeholder="Expected selling price">
+<button class="btn" onclick="addPurchase()">Add to Stock</button>
+</div>
+</section>
+
+<section id="customers"><h2>👥 Customers</h2><div class="card"><p>Customers from completed sales will appear here in the next customer upgrade.</p></div></section>
+
+<section id="repair">
+<h2>🔧 Repair</h2>
+<div class="form">
+<input id="repairCustomer" placeholder="Customer name"><input id="repairPhone" placeholder="Customer mobile">
+<input id="repairDevice" placeholder="Device / model"><input id="repairIssue" placeholder="Problem">
+<input id="repairCost" type="number" placeholder="Estimated cost">
+<select id="repairStatus"><option>Received</option><option>In Repair</option><option>Ready</option><option>Delivered</option></select>
+<button class="btn" onclick="addRepair()">Add Repair</button>
+</div>
+<div class="tablewrap"><table class="table"><thead><tr><th>Customer</th><th>Device</th><th>Problem</th><th>Cost</th><th>Status</th></tr></thead><tbody id="repairTable"></tbody></table></div>
+</section>
+
+<section id="exchange">
+<h2>🔄 Exchange / Old Phone</h2>
+<div class="form">
+<input id="exCustomer" placeholder="Customer name"><input id="exOldModel" placeholder="Old phone model">
+<input id="exOldImei" placeholder="Old phone IMEI"><input id="exValue" type="number" placeholder="Exchange value">
+<input id="exNewModel" placeholder="New phone model"><button class="btn" onclick="addExchange()">Save Exchange</button>
+</div>
+<div class="tablewrap"><table class="table"><thead><tr><th>Customer</th><th>Old Phone</th><th>IMEI</th><th>Value</th><th>New Phone</th></tr></thead><tbody id="exchangeTable"></tbody></table></div>
+</section>
+
+<section id="expenses">
+<h2>💸 Expenses</h2>
+<div class="form"><input id="expName" placeholder="Expense name"><input id="expAmount" type="number" placeholder="Amount"><button class="btn" onclick="addExpense()">Add Expense</button></div>
+<div class="tablewrap"><table class="table"><thead><tr><th>Expense</th><th>Amount</th><th>Date</th></tr></thead><tbody id="expenseTable"></tbody></table></div>
+</section>
+
+<section id="reports">
+<h2>📈 Reports</h2>
+<div class="cards">
+<div class="card"><div class="label">Total Sales</div><div class="value" id="reportSales">₹0</div></div>
+<div class="card"><div class="label">Net Profit</div><div class="value" id="profitValue">₹0</div></div>
+<div class="card"><div class="label">Expenses</div><div class="value" id="expenseValue">₹0</div></div>
+</div>
+</section>
+</main>
+
+<div id="invoicePrint"><div id="invoicePaper"></div></div>
+
+<script>
+let stock=JSON.parse(localStorage.getItem('ma_stock')||'[]');
+let sales=JSON.parse(localStorage.getItem('ma_sales')||'[]');
+let repairs=JSON.parse(localStorage.getItem('ma_repairs')||'[]');
+let exchanges=JSON.parse(localStorage.getItem('ma_exchanges')||'[]');
+let expenses=JSON.parse(localStorage.getItem('ma_expenses')||'[]');
+
+function persist(){
+ localStorage.setItem('ma_stock',JSON.stringify(stock));
+ localStorage.setItem('ma_sales',JSON.stringify(sales));
+ localStorage.setItem('ma_repairs',JSON.stringify(repairs));
+ localStorage.setItem('ma_exchanges',JSON.stringify(exchanges));
+ localStorage.setItem('ma_expenses',JSON.stringify(expenses));
+}
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function openTab(id,btn){
+ document.querySelectorAll('main section').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
+ btn.classList.add('active'); render();
+}
+function addStock(){
+ let model=document.getElementById('model').value.trim(),imei=document.getElementById('imei').value.trim();
+ if(!model||!imei){alert('Please enter model and IMEI');return}
+ stock.push({id:Date.now(),model,imei,condition:document.getElementById('condition').value||'Used',purchase:+document.getElementById('purchase').value||0,sell:+document.getElementById('sell').value||0});
+ persist();['model','imei','condition','purchase','sell'].forEach(id=>document.getElementById(id).value='');render();
+}
+function addPurchase(){
+ let model=buyModel.value.trim(),imei=buyImei.value.trim();if(!model||!imei){alert('Enter model and IMEI');return}
+ stock.push({id:Date.now(),model,imei,condition:'Used',purchase:+buyPrice.value||0,sell:+buySell.value||0});
+ persist();buyModel.value=buyImei.value=buyPrice.value=buySell.value='';render();alert('Phone added to stock');
+}
+function delStock(id){stock=stock.filter(x=>x.id!==id);persist();render()}
+function setSalePrice(){let x=stock.find(a=>a.id==salePhone.value);if(x)salePrice.value=x.sell||''}
+function makeSale(){
+ let x=stock.find(a=>a.id==salePhone.value);if(!x){alert('Add a phone to stock first');return}
+ let amount=+salePrice.value||x.sell||0;
+ let sale={invoice:'MA-'+Date.now().toString().slice(-6),customer:customerName.value||'Walk-in Customer',phone:customerPhone.value||'',amount,profit:amount-x.purchase,payment:payment.value,date:new Date().toLocaleString('en-IN'),model:x.model,imei:x.imei};
+ sales.push(sale);stock=stock.filter(a=>a.id!==x.id);persist();customerName.value=customerPhone.value=salePrice.value='';render();alert('Sale completed: '+sale.invoice)
+}
+function addRepair(){repairs.push({customer:repairCustomer.value||'Walk-in',phone:repairPhone.value,device:repairDevice.value,issue:repairIssue.value,cost:+repairCost.value||0,status:repairStatus.value});persist();render()}
+function addExchange(){exchanges.push({customer:exCustomer.value||'Walk-in',oldModel:exOldModel.value,imei:exOldImei.value,value:+exValue.value||0,newModel:exNewModel.value});persist();render()}
+function addExpense(){let n=expName.value.trim(),a=+expAmount.value||0;if(!n||!a){alert('Enter expense and amount');return}expenses.push({name:n,amount:a,date:new Date().toLocaleDateString('en-IN')});persist();expName.value=expAmount.value='';render()}
+function printInvoice(no){
+ let x=sales.find(a=>a.invoice===no);if(!x)return;
+ invoicePaper.innerHTML='<h1 style="text-align:center">📱 मोबाइल अड्डा</h1><p style="text-align:center">MOBILE ADDA</p><hr>'+
+ '<p><b>Invoice:</b> '+esc(x.invoice)+'<br><b>Date:</b> '+esc(x.date)+'</p>'+
+ '<p><b>Customer:</b> '+esc(x.customer)+'<br><b>Mobile:</b> '+esc(x.phone||'-')+'</p>'+
+ '<table style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #ccc;padding:8px">Phone</th><th style="border:1px solid #ccc;padding:8px">IMEI</th><th style="border:1px solid #ccc;padding:8px">Amount</th></tr><tr><td style="border:1px solid #ccc;padding:8px">'+esc(x.model)+'</td><td style="border:1px solid #ccc;padding:8px">'+esc(x.imei)+'</td><td style="border:1px solid #ccc;padding:8px">₹'+x.amount.toLocaleString('en-IN')+'</td></tr></table><h2 style="text-align:right">Total: ₹'+x.amount.toLocaleString('en-IN')+'</h2><p>Payment: '+esc(x.payment)+'</p><p style="text-align:center">Thank you for shopping with Mobile Adda!</p>';
+ invoicePrint.style.display='block';window.print();setTimeout(()=>invoicePrint.style.display='none',500)
+}
+function backup(){
+ let data={stock,sales,repairs,exchanges,expenses};
+ let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='mobile-adda-backup.json';a.click();
+}
+function render(){
+ let q=(search?.value||'').toLowerCase(), rows=stock.filter(x=>(x.model+' '+x.imei).toLowerCase().includes(q));
+ stockTable.innerHTML=rows.length?rows.map(x=>'<tr><td>'+esc(x.model)+'</td><td>'+esc(x.imei)+'</td><td>'+esc(x.condition)+'</td><td>₹'+x.purchase+'</td><td>₹'+x.sell+'</td><td><button class="btn secondary" onclick="delStock('+x.id+')">Delete</button></td></tr>').join(''):'<tr><td colspan="6" class="empty">No phones in stock</td></tr>';
+ salePhone.innerHTML=stock.length?stock.map(x=>'<option value="'+x.id+'">'+esc(x.model)+' • '+esc(x.imei)+'</option>').join(''):'<option value="">No stock available</option>';setSalePrice();
+ stockCount.textContent=stock.length;stockValue.textContent='₹'+stock.reduce((a,x)=>a+x.purchase,0).toLocaleString('en-IN');
+ soldCount.textContent=sales.length;salesValue.textContent='₹'+sales.reduce((a,x)=>a+x.amount,0).toLocaleString('en-IN');
+ salesTable.innerHTML=sales.length?sales.slice().reverse().map(x=>'<tr><td>'+x.invoice+'</td><td>'+esc(x.customer)+'</td><td>'+esc(x.phone)+'</td><td>₹'+x.amount.toLocaleString('en-IN')+'</td><td>₹'+x.profit.toLocaleString('en-IN')+'</td><td>'+esc(x.date)+'</td><td><button class="btn secondary" onclick="printInvoice(\\''+x.invoice+'\\')">🧾 Print</button></td></tr>').join(''):'<tr><td colspan="7" class="empty">No sales yet</td></tr>';
+ repairTable.innerHTML=repairs.length?repairs.slice().reverse().map(x=>'<tr><td>'+esc(x.customer)+'</td><td>'+esc(x.device)+'</td><td>'+esc(x.issue)+'</td><td>₹'+x.cost+'</td><td>'+esc(x.status)+'</td></tr>').join(''):'<tr><td colspan="5" class="empty">No repairs yet</td></tr>';
+ exchangeTable.innerHTML=exchanges.length?exchanges.slice().reverse().map(x=>'<tr><td>'+esc(x.customer)+'</td><td>'+esc(x.oldModel)+'</td><td>'+esc(x.imei)+'</td><td>₹'+x.value+'</td><td>'+esc(x.newModel)+'</td></tr>').join(''):'<tr><td colspan="5" class="empty">No exchanges yet</td></tr>';
+ expenseTable.innerHTML=expenses.length?expenses.slice().reverse().map(x=>'<tr><td>'+esc(x.name)+'</td><td>₹'+x.amount.toLocaleString('en-IN')+'</td><td>'+x.date+'</td></tr>').join(''):'<tr><td colspan="3" class="empty">No expenses yet</td></tr>';
+ let totalSales=sales.reduce((a,x)=>a+x.amount,0), gross=sales.reduce((a,x)=>a+x.profit,0), ex=expenses.reduce((a,x)=>a+x.amount,0);
+ reportSales.textContent='₹'+totalSales.toLocaleString('en-IN');profitValue.textContent='₹'+(gross-ex).toLocaleString('en-IN');expenseValue.textContent='₹'+ex.toLocaleString('en-IN');
+}
+render();
+</script>
+</body></html>
